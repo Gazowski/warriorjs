@@ -1,0 +1,40 @@
+# poof le grand - Baby Steps
+
+### _For players new to WarriorJS_
+
+## Level 3
+
+_The air feels thicker than before. There must be a horde of sludge._
+
+> **TIP:** Be careful not to die! Use `warrior.health()` and `warrior.maxHealth()` to keep an eye on your health, and `warrior.rest()` to earn 10% of your max health back.
+
+### Floor Map
+
+```
+╔═════════╗
+║@ s ss s>║
+╚═════════╝
+
+@ = poof le grand (20 HP)
+s = Sludge (12 HP)
+> = stairs
+```
+
+## Abilities
+
+### Actions (only one per turn)
+
+- `warrior.walk()`: Moves one space in the given direction (`'forward'` by default).
+- `warrior.attack()`: Attacks a unit in the given direction (`'forward'` by default), dealing 5 HP of damage.
+- `warrior.rest()`: Gains 10% of max health back, but does nothing more.
+
+### Senses
+
+- `warrior.think()`: Thinks out loud (`console.log` replacement).
+- `warrior.feel()`: Returns the adjacent space in the given direction (`'forward'` by default).
+- `warrior.health()`: Returns an integer representing your health.
+- `warrior.maxHealth()`: Returns an integer representing your maximum health.
+
+## Next Steps
+
+When you're done editing `Player.js`, run the `warriorjs` command again.

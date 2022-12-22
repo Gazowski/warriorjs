@@ -7,7 +7,7 @@ class Player {
     this.ennemyMaxDamage = null;
     this.backwardMove = 0;
     this.restPlace = 1;
-    this.restedLevel = this.ennemyMaxDamage + 1;
+    this.restedLevel = null;
   }
 
   /**
@@ -15,6 +15,7 @@ class Player {
    */
   analyse() {
     this.healthEvolution.push(this.warrior.health());
+    this.warrior.think('analyse, étape:' + this.stepStatus);
   
     switch(this.stepStatus) {
       case 'retreat':
@@ -48,7 +49,6 @@ class Player {
   }
 
   checkIfAttack() {
-    this.warrior.think(this.healthEvolution.length)
     if(this.healthEvolution.length < 2) {
       return;
     }
@@ -61,6 +61,7 @@ class Player {
   }
 
   needRetreat() {
+    this.warrior.think('ennemyMaxDamage: ' + this.ennemyMaxDamage)
     if(this.warrior.health() <= this.ennemyMaxDamage + 1) {
       this.stepStatus = 'retreat';
       this.backwardMove++;
@@ -78,20 +79,17 @@ class Player {
   }
 
   isRested() {
+    this.restedLevel = this.ennemyMaxDamage + 1;
+    this.warrior.think('ma santé: ' + this.warrior.health());
+    this.warrior.think('niveau de repos: ' + this.restedLevel);
     if(this.warrior.health() < this.restedLevel) {
       this.stepStatus = 'rest';
     } else {
       this.stepStatus = 'rested';
     }
-  }  
+  }
   
-  playTurn(warrior) {
-    this.warrior = warrior;
-    this.warrior.think(this.warrior);
-    this.analyse();
-    
-    
-    // ajouter un 'switch / case' avec this.stepStatus
+  chooseAction() {
     switch(this.stepStatus) {
       case 'go':
         this.warrior.walk();
@@ -99,18 +97,25 @@ class Player {
       case 'attack':
         this.warrior.attack();
         break;
-        case 'retreat':
-          this.warrior.walk('backward');
-          break;
-          case 'rest': 
-          this.warrior.rest();
-          break;
-          case 'rested':
-            this.analyse();
-            break;
-          default:
-            console.log(this.warrior.think(this.warrior));
+      case 'retreat':
+        this.warrior.walk('backward');
+        break;
+      case 'rest': 
+        this.warrior.rest();
+        break;
+      case 'rested':
+        this.analyse();
+        this.chooseAction();
+        break;
+      default:
+        console.log(this.warrior.think(this.warrior));
     }
+  }
+  
+  playTurn(warrior) {
+    this.warrior = warrior;
+    this.analyse();
+    this.chooseAction();
     
     this.warrior.think(this.stepStatus);
   }         

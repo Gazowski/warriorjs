@@ -19,17 +19,45 @@ class Player {
   }
 
   analyse() {
+    //this.HealthEvolution.push(this.warrior.health());
     switch(this.stage) {
       case 'S_FORWARD':
-        this.action = 'A_WALK';
+        this.isUnitNext();
+        break;
+      case 'S_ATTACK':
+        this.isUnitNext();
         break;
     }
+  }
+
+  isUnitNext() {
+    if(this.warrior.feel().isUnit()) {
+      this.nextUnit = this.warrior.feel().getUnit();
+      if(this.nextUnit.isEnemy) {
+        this.stage = 'S_ATTACK';
+        this.action = 'A_ATTACK';
+      } else {
+        this.warrior.think('next unit = ' + this.nextUnit)
+      }
+    } else {
+      this.stage = 'S_FORWARD';
+      this.action = 'A_WALK';
+    }
+
+    return this.warrior.feel().isUnit();
+  }
+
+  isStrikerAlive() {
+
   }
 
   chooseAction() {
     switch(this.action) {
       case 'A_WALK':
         this.warrior.walk();
+        break;
+      case 'A_ATTACK':
+        this.warrior.attack();
         break;
     }
   }

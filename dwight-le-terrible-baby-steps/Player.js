@@ -19,13 +19,16 @@ class Player {
   }
 
   analyse() {
-    //this.HealthEvolution.push(this.warrior.health());
+    this.warrior.think('stage = ' + this.stage);
+    this.healthEvolution.push(this.warrior.health());
+    //this.warrior.think('healthEvoluiton = ' + this.healthEvolution)
     switch(this.stage) {
       case 'S_FORWARD':
         this.isUnitNext();
+        this.needRest();
         break;
       case 'S_ATTACK':
-        this.isUnitNext();
+        this.isStrikerAlive();
         break;
     }
   }
@@ -48,10 +51,24 @@ class Player {
   }
 
   isStrikerAlive() {
+    let lastIndex = this.healthEvolution.length - 1;
+    if(this.healthEvolution[lastIndex] < this.healthEvolution[lastIndex - 1]) {
+      this.stage = 'S_ATTACK';
+      this.action = 'A_ATTACK';
+    } else {
+      this.stage = 'S_FORWARD';
+      this.action = 'A_WALK';
+    }
+  }
 
+  needRest() {
+    if(this.warrior.health() < this.warrior.maxHealth()) {
+      this.action = 'A_REST';
+    }
   }
 
   chooseAction() {
+    this.warrior.think(`action = ${this.action}`)
     switch(this.action) {
       case 'A_WALK':
         this.warrior.walk();
@@ -59,6 +76,8 @@ class Player {
       case 'A_ATTACK':
         this.warrior.attack();
         break;
+      case 'A_REST' : 
+        this.warrior.rest();
     }
   }
 

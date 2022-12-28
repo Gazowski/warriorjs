@@ -2,18 +2,20 @@
 
 ### _For players new to WarriorJS_
 
-## Level 2
+## Level 3
 
-_It's too dark to see anything, but you smell sludge nearby._
+_The air feels thicker than before. There must be a horde of sludge._
 
-> **TIP:** Use `warrior.feel().isEmpty()` to see if there's anything in front of you, and `warrior.attack()` to fight it. Remember, you can only do one action per turn.
+> **TIP:** Be careful not to die! Use `warrior.health()` and `warrior.maxHealth()` to keep an eye on your health, and `warrior.rest()` to earn 10% of your max health back.
+
+> **CLUE:** When there's no enemy ahead of you, call `warrior.rest()` until your health is full before walking forward.
 
 ### Floor Map
 
 ```
-╔════════╗
-║@   s  >║
-╚════════╝
+╔═════════╗
+║@ s ss s>║
+╚═════════╝
 
 @ = Dwight le terrible (20 HP)
 s = Sludge (12 HP)
@@ -26,11 +28,14 @@ s = Sludge (12 HP)
 
 - `warrior.walk()`: Moves one space in the given direction (`'forward'` by default).
 - `warrior.attack()`: Attacks a unit in the given direction (`'forward'` by default), dealing 5 HP of damage.
+- `warrior.rest()`: Gains 10% of max health back, but does nothing more.
 
 ### Senses
 
 - `warrior.think()`: Thinks out loud (`console.log` replacement).
 - `warrior.feel()`: Returns the adjacent space in the given direction (`'forward'` by default).
+- `warrior.health()`: Returns an integer representing your health.
+- `warrior.maxHealth()`: Returns an integer representing your maximum health.
 
 ## Next Steps
 

@@ -16,114 +16,186 @@ class Player {
     this.stage = 'S_FORWARD';
     this.action = null;
     this.healthEvolution = [];
+    this.healthStatus = null;
+    this.stepStatus = null;
+    this.attackStatus = null;
+    this.longAttackStatus = null;
+    this.minimumHealth = {
+      'S_FORWARD': 20,
+      'S_LONGATTACK': 5 * 3, //3 * 3 cout en déplacement - 3 * 2 cout en combat
+      'S_ATTACK': 5 * 3, 
+    }
     //this.longAttackRest = 5 * 3 // 3 * 3 cout en déplacement - 3 * 2 cout en combat
   }
 
-  analyse() {
-    this.warrior.think('stage = ' + this.stage);
+  playTurn(warrior) {
+    this.warrior = warrior;
     this.healthEvolution.push(this.warrior.health());
-    const lastIndex = this.healthEvolution.length - 1;
-    this.healthNow = this.healthEvolution[lastIndex];
-    this.healthPrevious = this.healthEvolution[lastIndex - 1];
-    //this.warrior.think('healthEvoluiton = ' + this.healthEvolution)
+
+    this.checkHealth();
+    this.checkEnvironnement();
+
     switch(this.stage) {
       case 'S_FORWARD':
-        this.isUnitNext();
-        this.needRest();
-        this.isLongAttack();
+        this.stageForward();
         break;
       case 'S_ATTACK':
-        this.isStrikerAlive();
-        this.needRest();
+        this.stageAttack();
         break;
-      case 'S_lONG_ATTACK':
-        this.needRest();
+      case 'S_LONGATTACK':
+        this.warrior.think('ici')
+        this.stageLongAttack();
         break;
     }
+
+  //   this.warrior.think(`
+  //   this.stage = ${this.stage}
+  //   this.healthEvolution = ${this.healthEvolution}
+  //   this.healthStatus = ${this.healthStatus}
+  //   this.stepStatus = ${this.stepStatus}
+  //   this.attackStatus = ${this.attackStatus}
+  //   this.longAttackStatus = ${this.longAttackStatus}
+  //   this.healthStatus = ${this.healthStatus}
+  //   this.stepStatus = ${this.stepStatus}
+  //   this.attackStatus = ${this.attackStatus}
+  //   this.longAttackStatus = ${this.longAttackStatus}
+  // `)
+    this.warrior.think(`
+    this.stage = ${this.stage}
+
+  `)
   }
 
-  isUnitNext() {
-    if(this.warrior.feel().isUnit()) {
-      this.nextUnit = this.warrior.feel().getUnit();
-      if(this.nextUnit.isEnemy) {
-        this.stage = 'S_ATTACK';
-        this.action = 'A_ATTACK';
-      } else {
-        this.warrior.think('next unit = ' + this.nextUnit)
+  checkHealth() {
+    const lastIndex = this.healthEvolution.length - 1,
+          previousHealth = this.healthEvolution[lastIndex - 1],
+          roundHealth = this.healthEvolution[lastIndex];
+    
+    if(lastIndex == 0 || previousHealth == roundHealth) { 
+      this.healthStatus = 'stable'; 
+    } else if(previousHealth > roundHealth)  { 
+      this.healthStatus = 'decrease';
+    } else {
+      this.healthStatus = 'increase'
+    } 
+  }
+
+  checkEnvironnement() {
+    if(this.warrior.feel().getUnit()) {
+      if(this.warrior.feel().getUnit().isEnemy()) {
+        this.stepStatus = 'enemy';
       }
+    } else if (this.healthStatus == 'decrease') {
+      this.stepStatus = 'longAttack';
     } else {
-      this.stage = 'S_FORWARD';
-      this.action = 'A_WALK';
-    }
-
-    return this.warrior.feel().isUnit();
-  }
-
-  isStrikerAlive() {
-    if(this.healthNow < this.healthPrevious) {
-      this.action = 'A_ATTACK';
-    } else if(this.action == 'S_LONG_ATTACK') {
-      this.action = 'S_FORWARD';
-      this.analyse();
-    } else {
-      this.stage = 'S_FORWARD';
-      this.action = 'A_WALK';
+      this.stepStatus = 'clear';
     }
   }
 
   needRest() {
+    return this.warrior.health() < this.minimumHealth[this.stage];
+  }
+
+  isMaxHealth() {
+    return this.warrior.health() == this.warrior.maxHealth();
+  }
+
+  stageForward() {
+    switch(this.healthStatus) {
+      case 'stable':
+        if(this.needRest()) {
+          this.warrior.rest();
+        } else if (this.stepStatus == 'enemy') {
+          this.stage = 'S_ATTACK';
+          this.attackStatus = 'strike';
+          this.warrior.attack();
+        } else {
+          this.warrior.walk();
+        }
+        break;
+      case 'decrease':
+        if(this.stepStatus == 'longAttack') {
+          this.stage = 'S_LONGATTACK';
+          if(this.needRest()) {
+            this.longAttackStatus = 'rest';
+            this.warrior.walk('backward');
+          } else {
+            this.longAttackStatus = 'go';
+            this.warrior.walk();
+          }
+        } else if(this.stepStatus == 'enemy') {
+          this.stage = 'S_LONGATTACK';
+          this.longAttackStatus = 'strike';
+          this.warrior.attack();
+        }
+        break;
+      case 'increase':
+        if(this.warrior.health() < this.warrior.maxHealth()) {
+          this.warrior.rest();
+        } else {
+          this.warrior.walk();
+        }
+        break;
+    }
+  }
+
+  stageAttack() {
+    switch (this.attackStatus) {
+      case 'strike':
+        if(this.warrior.feel().isEmpty()) {
+          this.stage = 'S_FORWARD';
+          this.stageForward();
+        } else if(this.needRest()) {
+          this.attackStatus = 'rest'
+          this.warrior.walk('backward');
+        } else {
+          this.warrior.attack();
+        }
+        break;
+      case 'rest':
+        if(!this.isMaxHealth()) {
+          this.attackStatus = 'rest';
+          this.warrior.rest();
+        } else {
+          this.attackStatus = 'strike';
+          this.warrior.walk();
+        }
+        break;
+    }
+  }
+
+  stageLongAttack() {
     this.warrior.think(`
-    rest needed = ${this.rest[this.stage]}
-    stage = ${this.stage}`)
-    if(this.warrior.health() < this.rest[this.stage]) {
-      this.action = 'A_REST';
-      this.canRest();
-    }
-  }
-
-  canRest() {
-    if(this.healthNow < this.healthPrevious) {
-      this.action = 'A_RETREAT';
-    }
-  }
-
-  isLongAttack() {
-    const isUnit = this.warrior.feel().getUnit();
-    if(this.healthNow < this.healthPrevious) {
-      this.stage = isUnit ? 'S_ATTACK' : 'S_LONG_ATTACK';
-      this.action = isUnit ? 'A_ATTACK' : 'A_WALK';
-      this.analyse();
-    } 
-  }
-
-  chooseAction() {
-    this.warrior.think(`action = ${this.action}`)
-    switch(this.action) {
-      case 'A_WALK':
-        this.warrior.walk();
+    this.longAttackStatus = ${this.longAttackStatus};
+    `)
+    switch (this.longAttackStatus) {
+      case 'rest':
+        if(this.healthStatus == 'decrease') {
+          this.warrior.walk('backward');
+        } else if(!this.isMaxHealth()) {
+          this.warrior.rest()
+        } else {
+          this.longAttackStatus = 'go';
+          this.warrior.walk();
+        }
         break;
-      case 'A_ATTACK':
-        this.warrior.attack();
+      case 'go':
+        if(this.stepStatus == 'clear') {
+          this.warrior.walk();
+        } else {
+          this.longAttackStatus = 'strike';
+          this.warrior.attack();
+        }
         break;
-      case 'A_REST': 
-        this.warrior.rest();
-        break;
-      case 'A_RETREAT':
-        this.warrior.walk('backward');
+      case 'strike':
+        if(this.stepStatus == 'enemy') {
+          this.warrior.attack();
+        } else {
+          this.stage = 'S_FORWARD';
+          this.stageForward();
+        }
         break;
     }
   }
 
- 
-  
-  playTurn(warrior) {
-    this.warrior = warrior;
-    this.rest = {
-      'S_FORWARD' : this.warrior.maxHealth(),
-      'S_ATTACK': 2 * 3,
-      'S_LONG_ATTACK' : 5 * 3 // 3 * 3 cout en déplacement - 3 * 2 cout en combat
-    }
-    this.analyse();
-    this.chooseAction();
-  }         
 }
